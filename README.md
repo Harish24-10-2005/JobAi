@@ -276,13 +276,6 @@ uv add package_name
 # Run linter
 uv run ruff check .
 ```
-
----
-
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
 ---
 
 ## 🤝 Contributing
@@ -300,7 +293,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 This tool is for educational purposes. Always review applications before final submission. Respect job posting terms of service and rate limits.
 
 ---
-
-<p align="center">
-  Built with ❤️ using LangChain, Groq, and browser-use
-</p>
