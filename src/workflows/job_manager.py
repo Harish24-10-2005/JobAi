@@ -228,10 +228,10 @@ class JobApplicationWorkflow:
                     # Save generated resume
                     if tailored_resume:
                         resume_id = db_service.save_generated_resume(
-                            template_id="default",
                             tailored_content=tailored_resume,
                             job_title=analysis.role,
-                            company=analysis.company
+                            company=analysis.company,
+                            job_url=url
                         )
                         
                 except Exception as e:

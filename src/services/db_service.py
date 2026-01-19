@@ -166,7 +166,8 @@ class DatabaseService:
         job_title: str,
         company_name: str,
         content: Dict,
-        job_url: str = ""
+        job_url: str = "",
+        tone: str = "professional"
     ) -> Optional[str]:
         """
         Save generated cover letter.
@@ -174,7 +175,7 @@ class DatabaseService:
         Args:
             job_title: Target job title
             company_name: Target company
-            content: Cover letter content (JSON)
+            content: Cover letter content (JSONB) - REQUIRED
             
         Returns:
             Cover letter ID if saved
@@ -182,18 +183,24 @@ class DatabaseService:
         try:
             letter_id = str(uuid.uuid4())
             
+            # Ensure content is a dict (required NOT NULL JSONB column)
+            if not isinstance(content, dict):
+                content = {"text": str(content)}
+            
             data = {
                 "id": letter_id,
                 "job_title": job_title,
                 "company_name": company_name,
-                "content": content,
+                "content": content,  # REQUIRED: JSONB NOT NULL
                 "job_url": job_url,
+                "tone": tone,
                 "created_at": datetime.now().isoformat()
             }
             
             result = supabase_client.table("cover_letters").insert(data).execute()
             
             if result.data:
+                console.success(f"Cover letter saved")
                 return letter_id
             
             return None
@@ -204,17 +211,20 @@ class DatabaseService:
     
     def save_generated_resume(
         self,
-        template_id: str,
         tailored_content: Dict,
+        original_content: Dict = None,
+        template_id: str = None,
         job_title: str = "",
-        company: str = ""
+        company: str = "",
+        job_url: str = ""
     ) -> Optional[str]:
         """
         Save generated/tailored resume.
         
         Args:
-            template_id: Reference to resume_templates.id
-            tailored_content: Tailored resume content
+            tailored_content: Tailored resume content (JSONB) - REQUIRED
+            original_content: Original resume content (JSONB) - REQUIRED
+            template_id: Reference to resume_templates.id (UUID)
             
         Returns:
             Resume ID if saved
@@ -222,18 +232,32 @@ class DatabaseService:
         try:
             resume_id = str(uuid.uuid4())
             
+            # Ensure required JSONB fields are dicts
+            if not isinstance(tailored_content, dict):
+                tailored_content = {"content": str(tailored_content)}
+            if original_content is None:
+                original_content = tailored_content.copy()
+            if not isinstance(original_content, dict):
+                original_content = {"content": str(original_content)}
+            
             data = {
                 "id": resume_id,
-                "template_id": template_id,
-                "tailored_content": tailored_content,
-                "target_role": job_title,
-                "target_company": company,
+                "original_content": original_content,  # REQUIRED: JSONB NOT NULL
+                "tailored_content": tailored_content,  # REQUIRED: JSONB NOT NULL
+                "job_title": job_title,
+                "company_name": company,
+                "job_url": job_url,
                 "created_at": datetime.now().isoformat()
             }
+            
+            # Only add template_id if it's a valid UUID
+            if template_id and template_id != "default":
+                data["template_id"] = template_id
             
             result = supabase_client.table("generated_resumes").insert(data).execute()
             
             if result.data:
+                console.success(f"Resume saved")
                 return resume_id
             
             return None
