@@ -1,0 +1,35 @@
+[
+  {
+    "company": "Google",
+    "role": "Senior SWE",
+    "status": "Interview",
+    "applied_date": "2026-01-19",
+    "url": "",
+    "salary_range": "$150k-180k",
+    "notes": "",
+    "next_step": "Technical phone screen on Monday",
+    "priority": "High"
+  },
+  {
+    "company": "Meta",
+    "role": "Data Engineer",
+    "status": "Applied",
+    "applied_date": "2026-01-19",
+    "url": "",
+    "salary_range": "$140k-170k",
+    "notes": "",
+    "next_step": "",
+    "priority": "High"
+  },
+  {
+    "company": "Amazon",
+    "role": "SDE II",
+    "status": "Applied",
+    "applied_date": "2026-01-19",
+    "url": "",
+    "salary_range": "$130k-160k",
+    "notes": "",
+    "next_step": "",
+    "priority": "Medium"
+  }
+]

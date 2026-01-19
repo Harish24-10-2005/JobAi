@@ -9,11 +9,19 @@ class Settings(BaseSettings):
     Reads from environment variables and .env file.
     """
     
-    # AI Models
-    openrouter_api_key: Optional[SecretStr] = Field(None, alias="OPENROUTER_API_KEY1")
-    openrouter_api_key_fallback: Optional[SecretStr] = Field(None, alias="OPENROUTER_API_KEY")
+    # AI Models - Groq
     groq_api_key: SecretStr = Field(..., alias="GROQ_API_KEY")
     groq_api_key_fallback: Optional[SecretStr] = Field(None, alias="GROQ_API_KEY1")
+    groq_model: str = Field("llama-3.1-8b-instant", alias="GROQ_MODEL")
+    
+    # AI Models - OpenRouter
+    openrouter_api_key: Optional[SecretStr] = Field(None, alias="OPENROUTER_API_KEY")
+    openrouter_api_key_fallback: Optional[SecretStr] = Field(None, alias="OPENROUTER_API_KEY1")
+    openrouter_model: str = Field("qwen/qwen-2.5-coder-32b-instruct:free", alias="OPENROUTER_MODEL")
+    
+    # AI Models - Gemini
+    gemini_api_key: Optional[SecretStr] = Field(None, alias="GEMINI_API_KEY")
+    gemini_model: str = Field("gemini-2.0-flash-exp", alias="GEMINI_MODEL1")
     
     # Search
     serpapi_api_key: SecretStr = Field(..., alias="SERPAPI_API_KEY")
