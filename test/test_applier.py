@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 # Add project root to sys.path
-root_dir = str(Path(__file__).resolve().parent)
+root_dir = str(Path(__file__).resolve().parent.parent)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
@@ -15,7 +15,7 @@ from src.models.profile import UserProfile
 import yaml
 
 def load_profile() -> UserProfile:
-    profile_path = Path(__file__).parent / "src/data/user_profile.yaml"
+    profile_path = Path(__file__).parent.parent / "src/data/user_profile.yaml"
     with open(profile_path, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
     return UserProfile(**data)
