@@ -13,6 +13,7 @@ from src.models.profile import UserProfile
 from src.automators.scout import ScoutAgent
 from src.automators.analyst import AnalystAgent
 from src.automators.applier import ApplierAgent
+from src.services.db_service import db_service
 
 
 class JobApplicationWorkflow:
@@ -162,10 +163,38 @@ class JobApplicationWorkflow:
             console.workflow_job_progress(i, len(job_urls), url)
             logger.info(f"--- Processing Job {i}/{len(job_urls)} ---")
             
+            # Initialize IDs for database tracking
+            job_id = None
+            analysis_id = None
+            resume_id = None
+            cover_letter_id = None
+            
             # 3. Analyze fit
             try:
                 analysis = await self.analyst.run(url, resume_text)
                 self.stats["analyzed"] += 1
+                
+                # Save discovered job to database
+                job_id = db_service.save_discovered_job(
+                    url=url,
+                    title=analysis.role,
+                    company=analysis.company,
+                    location=location
+                )
+                
+                # Save analysis to database
+                if job_id:
+                    analysis_id = db_service.save_job_analysis(
+                        job_id=job_id,
+                        role=analysis.role,
+                        company=analysis.company,
+                        match_score=analysis.match_score,
+                        tech_stack=getattr(analysis, 'tech_stack', []),
+                        matching_skills=analysis.matching_skills,
+                        missing_skills=analysis.missing_skills,
+                        reasoning=analysis.reasoning or ""
+                    )
+                    
             except Exception as e:
                 logger.error(f"Analysis failed for {url}: {e}")
                 console.error(f"Analysis failed: {e}")
@@ -195,6 +224,16 @@ class JobApplicationWorkflow:
                     )
                     self.stats["resumes_tailored"] += 1
                     console.success("Resume tailored")
+                    
+                    # Save generated resume
+                    if tailored_resume:
+                        resume_id = db_service.save_generated_resume(
+                            template_id="default",
+                            tailored_content=tailored_resume,
+                            job_title=analysis.role,
+                            company=analysis.company
+                        )
+                        
                 except Exception as e:
                     logger.warning(f"Resume tailoring failed: {e}")
                     console.warning(f"Resume tailoring skipped: {e}")
@@ -210,6 +249,16 @@ class JobApplicationWorkflow:
                     )
                     self.stats["cover_letters"] += 1
                     console.success("Cover letter generated")
+                    
+                    # Save cover letter
+                    if cover_letter:
+                        cover_letter_id = db_service.save_cover_letter(
+                            job_title=analysis.role,
+                            company_name=analysis.company,
+                            content={"text": str(cover_letter)},
+                            job_url=url
+                        )
+                        
                 except Exception as e:
                     logger.warning(f"Cover letter generation failed: {e}")
                     console.warning(f"Cover letter skipped: {e}")
@@ -220,12 +269,23 @@ class JobApplicationWorkflow:
                 await self.applier.run(url, self.profile)
                 self.stats["applied"] += 1
                 logger.info(f"🎉 Applied to {analysis.company}")
+                
+                # Save application to database
+                if job_id:
+                    db_service.save_application(
+                        job_id=job_id,
+                        analysis_id=analysis_id,
+                        resume_id=resume_id,
+                        cover_letter_id=cover_letter_id,
+                        status="applied"
+                    )
+                    
             except Exception as e:
                 logger.error(f"Application failed for {url}: {e}")
                 console.error(f"Application failed: {e}")
                 continue
             
-            # 7. Track application
+            # 7. Track application (local tracker)
             try:
                 console.step(4, 4, "Logging to tracker...")
                 await self.tracker_agent.add_application(

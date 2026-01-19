@@ -31,5 +31,38 @@
     "notes": "",
     "next_step": "",
     "priority": "Medium"
+  },
+  {
+    "company": "Jobgether",
+    "role": "Entry Level Python Developer",
+    "status": "Applied",
+    "applied_date": "2026-01-19",
+    "url": "https://jobs.lever.co/jobgether/6574d46e-95d4-4b74-a3f5-e3e481b77794",
+    "salary_range": "",
+    "notes": "",
+    "next_step": "",
+    "priority": "Medium"
+  },
+  {
+    "company": "Jobgether",
+    "role": "Senior Backend Python Developer",
+    "status": "Applied",
+    "applied_date": "2026-01-19",
+    "url": "https://jobs.lever.co/jobgether/434fa89e-1a9f-4097-8eb7-a7add23a5c01",
+    "salary_range": "",
+    "notes": "",
+    "next_step": "",
+    "priority": "Medium"
+  },
+  {
+    "company": "Dehazelabs",
+    "role": "Junior Python Developer",
+    "status": "Applied",
+    "applied_date": "2026-01-19",
+    "url": "https://jobs.ashbyhq.com/dehazelabs/3fc045c8-c43d-4523-b258-80e35b2930ed",
+    "salary_range": "",
+    "notes": "",
+    "next_step": "",
+    "priority": "Medium"
   }
 ]

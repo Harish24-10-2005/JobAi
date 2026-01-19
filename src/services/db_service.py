@@ -1,0 +1,287 @@
+"""
+Database Service - Persistence layer for job tracking
+Handles saving jobs, analyses, applications to Supabase
+"""
+from typing import Dict, List, Optional
+from datetime import datetime
+import uuid
+
+from src.services.supabase_client import supabase_client
+from src.core.console import console
+
+
+class DatabaseService:
+    """
+    Service for persisting job search data to Supabase.
+    """
+    
+    def save_discovered_job(
+        self,
+        url: str,
+        title: str = "",
+        company: str = "",
+        location: str = "",
+        source: str = "scout"
+    ) -> Optional[str]:
+        """
+        Save a discovered job to the database.
+        
+        Args:
+            url: Job posting URL
+            title: Job title
+            company: Company name
+            location: Job location
+            source: Discovery source (scout, manual)
+            
+        Returns:
+            Job ID if saved successfully
+        """
+        try:
+            job_id = str(uuid.uuid4())
+            
+            data = {
+                "id": job_id,
+                "url": url,
+                "title": title or "Unknown",
+                "company": company or "Unknown",
+                "location": location or "Remote",
+                "source": source,
+                "discovered_at": datetime.now().isoformat()
+            }
+            
+            result = supabase_client.table("discovered_jobs").insert(data).execute()
+            
+            if result.data:
+                console.success(f"Saved job: {title} at {company}")
+                return job_id
+            
+            return None
+            
+        except Exception as e:
+            console.warning(f"Could not save job: {e}")
+            return None
+    
+    def save_job_analysis(
+        self,
+        job_id: str,
+        role: str,
+        company: str,
+        match_score: int,
+        tech_stack: List[str] = None,
+        matching_skills: List[str] = None,
+        missing_skills: List[str] = None,
+        reasoning: str = ""
+    ) -> Optional[str]:
+        """
+        Save job analysis to the database.
+        
+        Args:
+            job_id: Reference to discovered_jobs.id
+            role: Job role
+            company: Company name
+            match_score: 0-100 match score
+            
+        Returns:
+            Analysis ID if saved
+        """
+        try:
+            analysis_id = str(uuid.uuid4())
+            
+            data = {
+                "id": analysis_id,
+                "job_id": job_id,
+                "role": role,
+                "company": company,
+                "match_score": match_score,
+                "tech_stack": tech_stack or [],
+                "matching_skills": matching_skills or [],
+                "missing_skills": missing_skills or [],
+                "reasoning": reasoning,
+                "analyzed_at": datetime.now().isoformat()
+            }
+            
+            result = supabase_client.table("job_analyses").insert(data).execute()
+            
+            if result.data:
+                return analysis_id
+            
+            return None
+            
+        except Exception as e:
+            console.warning(f"Could not save analysis: {e}")
+            return None
+    
+    def save_application(
+        self,
+        job_id: str,
+        analysis_id: str = None,
+        resume_id: str = None,
+        cover_letter_id: str = None,
+        status: str = "pending"
+    ) -> Optional[str]:
+        """
+        Save job application to the database.
+        
+        Args:
+            job_id: Reference to discovered_jobs.id
+            analysis_id: Reference to job_analyses.id
+            resume_id: Reference to generated_resumes.id
+            cover_letter_id: Reference to cover_letters.id
+            status: Application status
+            
+        Returns:
+            Application ID if saved
+        """
+        try:
+            app_id = str(uuid.uuid4())
+            
+            data = {
+                "id": app_id,
+                "job_id": job_id,
+                "status": status,
+                "applied_at": datetime.now().isoformat()
+            }
+            
+            if analysis_id:
+                data["analysis_id"] = analysis_id
+            if resume_id:
+                data["resume_id"] = resume_id
+            if cover_letter_id:
+                data["cover_letter_id"] = cover_letter_id
+            
+            result = supabase_client.table("applications").insert(data).execute()
+            
+            if result.data:
+                console.success(f"Application logged")
+                return app_id
+            
+            return None
+            
+        except Exception as e:
+            console.warning(f"Could not save application: {e}")
+            return None
+    
+    def save_cover_letter(
+        self,
+        job_title: str,
+        company_name: str,
+        content: Dict,
+        job_url: str = ""
+    ) -> Optional[str]:
+        """
+        Save generated cover letter.
+        
+        Args:
+            job_title: Target job title
+            company_name: Target company
+            content: Cover letter content (JSON)
+            
+        Returns:
+            Cover letter ID if saved
+        """
+        try:
+            letter_id = str(uuid.uuid4())
+            
+            data = {
+                "id": letter_id,
+                "job_title": job_title,
+                "company_name": company_name,
+                "content": content,
+                "job_url": job_url,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            result = supabase_client.table("cover_letters").insert(data).execute()
+            
+            if result.data:
+                return letter_id
+            
+            return None
+            
+        except Exception as e:
+            console.warning(f"Could not save cover letter: {e}")
+            return None
+    
+    def save_generated_resume(
+        self,
+        template_id: str,
+        tailored_content: Dict,
+        job_title: str = "",
+        company: str = ""
+    ) -> Optional[str]:
+        """
+        Save generated/tailored resume.
+        
+        Args:
+            template_id: Reference to resume_templates.id
+            tailored_content: Tailored resume content
+            
+        Returns:
+            Resume ID if saved
+        """
+        try:
+            resume_id = str(uuid.uuid4())
+            
+            data = {
+                "id": resume_id,
+                "template_id": template_id,
+                "tailored_content": tailored_content,
+                "target_role": job_title,
+                "target_company": company,
+                "created_at": datetime.now().isoformat()
+            }
+            
+            result = supabase_client.table("generated_resumes").insert(data).execute()
+            
+            if result.data:
+                return resume_id
+            
+            return None
+            
+        except Exception as e:
+            console.warning(f"Could not save resume: {e}")
+            return None
+    
+    def update_application_status(
+        self,
+        application_id: str,
+        status: str
+    ) -> bool:
+        """Update application status."""
+        try:
+            result = supabase_client.table("applications").update(
+                {"status": status}
+            ).eq("id", application_id).execute()
+            
+            return bool(result.data)
+            
+        except Exception as e:
+            console.warning(f"Could not update status: {e}")
+            return False
+    
+    def get_applications_summary(self) -> Dict:
+        """Get summary of all applications."""
+        try:
+            result = supabase_client.table("applications").select("*").execute()
+            
+            if not result.data:
+                return {"total": 0, "by_status": {}}
+            
+            by_status = {}
+            for app in result.data:
+                status = app.get("status", "unknown")
+                by_status[status] = by_status.get(status, 0) + 1
+            
+            return {
+                "total": len(result.data),
+                "by_status": by_status,
+                "applications": result.data
+            }
+            
+        except Exception as e:
+            console.warning(f"Could not get summary: {e}")
+            return {"total": 0, "by_status": {}, "error": str(e)}
+
+
+# Singleton instance
+db_service = DatabaseService()
